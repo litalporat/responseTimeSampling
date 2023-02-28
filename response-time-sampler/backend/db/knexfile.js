@@ -16,7 +16,7 @@ module.exports = {
       max: 10,
     },
     migrations: {
-      tableName: "knex_google_response_migrations",
+      tableName: "knex_responses_migrations",
     },
   },
 };
