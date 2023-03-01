@@ -1,10 +1,11 @@
-import logo from "./logo.svg";
 import "./App.css";
+import Content from "./components/Content";
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header"></header>
+      <h1>Website Response Time Sampler</h1>
+      <Content />
     </div>
   );
 }
