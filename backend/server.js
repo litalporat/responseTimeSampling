@@ -2,6 +2,7 @@ const axios = require("axios");
 const express = require("express");
 const knex = require("./db/db");
 const app = express();
+const cors = require("cors");
 
 const WEBSITES = {
   google: "https://www.google.com/",
@@ -12,6 +13,7 @@ const WEBSITES = {
 };
 
 app.use(express.json());
+app.use(cors());
 
 app.get("/", (req, res) => {
   res.send("hello");
@@ -24,9 +26,6 @@ function measureResponse(websiteUrl, websiteName) {
       .get(websiteUrl)
       .then(() => {
         const responseTime = performance.now() - startTime;
-        console.log(
-          `${websiteName}'s response time is ${responseTime} milliseconds`
-        );
         resolve({ website: websiteName, time: responseTime });
       })
       .catch((e) => reject(`${websiteName}: ${e}`));
@@ -54,6 +53,26 @@ app.post("/response", async (req, res) => {
   } catch (error) {
     console.error(`Error fetching data: ${error}`);
   }
+});
+
+app.get("/response", async (req, res) => {
+  const resultsPromises = [];
+  for (const website in WEBSITES) {
+    resultsPromises.push(
+      new Promise((resolve, reject) => {
+        knex("responses")
+          .select("response_time")
+          .limit(10)
+          .where("website", website)
+          .then((data) => {
+            resolve({ website: website, responses: data });
+          })
+          .catch((e) => reject(`${websiteName}: ${e}`));
+      })
+    );
+  }
+  const results = await Promise.all(resultsPromises);
+  res.json(results);
 });
 
 // app.put("/response", (req, res) => {
@@ -84,6 +103,6 @@ app.post("/response", async (req, res) => {
 //     });
 // });
 
-app.listen("3000", () => {
-  console.log("Server is runnig on port 3000");
+app.listen("5000", () => {
+  console.log("Server is runnig on port 5000");
 });
