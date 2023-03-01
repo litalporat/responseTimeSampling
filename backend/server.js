@@ -11,6 +11,7 @@ const WEBSITES = {
   cnet: "https://www.cnet.com/",
   amazon: "https://www.amazon.com/",
 };
+const QUERTY_SIZE = 10 * Object.keys(WEBSITES).length;
 
 app.use(express.json());
 app.use(cors());
@@ -32,7 +33,7 @@ function measureResponse(websiteUrl, websiteName) {
   });
 }
 
-app.post("/response", async (req, res) => {
+app.get("/newresponse", async (req, res) => {
   const measurementPromises = [];
   for (const [websiteName, websiteUrl] of Object.entries(WEBSITES)) {
     measurementPromises.push(measureResponse(websiteUrl, websiteName));
@@ -55,53 +56,30 @@ app.post("/response", async (req, res) => {
   }
 });
 
-app.get("/response", async (req, res) => {
-  const resultsPromises = [];
-  for (const website in WEBSITES) {
-    resultsPromises.push(
-      new Promise((resolve, reject) => {
-        knex("responses")
-          .select("response_time")
-          .limit(10)
-          .where("website", website)
-          .then((data) => {
-            resolve({ website: website, responses: data });
-          })
-          .catch((e) => reject(`${websiteName}: ${e}`));
-      })
-    );
-  }
-  const results = await Promise.all(resultsPromises);
-  res.json(results);
+app.get("/history", async (req, res) => {
+  const resultsMap = new Map();
+  Object.keys(WEBSITES).map((key) => {
+    resultsMap.set(key, []);
+  });
+  knex("responses")
+    .orderBy("id", "desc")
+    .select("website", "response_time")
+    .limit(QUERTY_SIZE)
+    .then((data) => {
+      data.map((row) => {
+        resultsMap.get(row["website"]).push(row["response_time"]);
+      });
+      const resultJson = Object.keys(WEBSITES).map((key) => ({
+        website: key,
+        responses: resultsMap.get(key),
+      }));
+      console.log(resultJson);
+      res.json(resultJson);
+    })
+    .catch((error) => {
+      console.error(`Error fetching data: ${error}`);
+    });
 });
-
-// app.put("/response", (req, res) => {
-//   knex("responses")
-//     .where("id", 6)
-//     .update({ response_time: 5 })
-//     .then(() => {
-//       knex
-//         .select()
-//         .from("responses")
-//         .then((responses) => {
-//           res.send(responses);
-//         });
-//     });
-// });
-
-// app.delete("/response", (req, res) => {
-//   knex("responses")
-//     .where("id", 8)
-//     .del()
-//     .then(() => {
-//       knex
-//         .select()
-//         .from("responses")
-//         .then((responses) => {
-//           res.send(responses);
-//         });
-//     });
-// });
 
 app.listen("5000", () => {
   console.log("Server is runnig on port 5000");
