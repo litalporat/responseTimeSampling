@@ -46,12 +46,11 @@ app.post("/response", async (req, res) => {
       response_time: time,
     }));
     res.json(rowsToInsert);
-    // check
-    // knex(`${websiteName}_responses`)
-    //   .insert(rowsToInsert)
-    //   .catch((error) => {
-    //     console.error(`Error inserting ${websiteName} data: ${error}`);
-    //   });
+    knex("responses")
+      .insert(rowsToInsert)
+      .catch((error) => {
+        console.error(`Error inserting ${websiteName} data: ${error}`);
+      });
   } catch (error) {
     console.error(`Error fetching data: ${error}`);
   }
