@@ -11,6 +11,14 @@ const WEBSITES = {
   cnet: "https://www.cnet.com/",
   amazon: "https://www.amazon.com/",
 };
+const COLORS = {
+  google: "#ff6384",
+  facebook: "#35a2eb",
+  twitter: "#cce657",
+  cnet: "#519f58",
+  amazon: "#db7ae0",
+};
+
 const QUERTY_SIZE = 10 * Object.keys(WEBSITES).length;
 
 app.use(express.json());
@@ -69,11 +77,11 @@ app.get("/history", async (req, res) => {
       data.map((row) => {
         resultsMap.get(row["website"]).push(row["response_time"]);
       });
-      const resultJson = Object.keys(WEBSITES).map((key) => ({
-        website: key,
-        responses: resultsMap.get(key),
+      const resultJson = Object.keys(WEBSITES).map((websiteName) => ({
+        websiteName,
+        responses: resultsMap.get(websiteName),
+        color: COLORS[websiteName],
       }));
-      console.log(resultJson);
       res.json(resultJson);
     })
     .catch((error) => {
