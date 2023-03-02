@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Card from "@mui/material/Card";
 import { Button } from "@mui/material";
 import Graph from "./Graph";
 import axios from "axios";
+import { useInterval } from "usehooks-ts";
 
 export default function Content() {
-  const [interval, setIntervalId] = useState(false);
+  const [intervalFlag, setIntervalFlag] = useState(false);
   const [responseTimes, setResponseTimes] = useState();
 
   useEffect(() => {
@@ -18,35 +19,33 @@ export default function Content() {
     });
   }, []);
 
-  const activateResponses = async () => {
-    const response = await axios.get("http://localhost:5000/newresponse");
+  const activateResponses = useCallback(async () => {
+    const response = await axios.get("http://localhost:5000/newmeasure");
     setResponseTimes((prevResponseTimes) => {
       const newData = { ...prevResponseTimes };
       for (const websiteData of response.data) {
-        newData[websiteData.website].responses.push(websiteData.response_time);
-        newData[websiteData.website].responses.shift();
+        newData[websiteData.website].responses = [
+          ...newData[websiteData.website].responses.slice(1),
+          websiteData.response_time,
+        ];
         console.log(newData[websiteData.website].responses);
       }
       console.log(newData);
       return newData;
     });
-  };
+  }, []);
+  useInterval(activateResponses, intervalFlag ? 3000 : null);
+
   const btnOnClick = () => {
-    setIntervalId((prevInterval) => {
-      if (prevInterval) {
-        clearInterval(prevInterval);
-        return false;
-      } else {
-        const intervalId = setInterval(activateResponses, 3000);
-        return intervalId;
-      }
+    setIntervalFlag((prevIntervalFlag) => {
+      return !prevIntervalFlag;
     });
   };
 
   return (
     <div>
       <div>
-        {interval ? (
+        {intervalFlag ? (
           <Button
             variant="contained"
             color="error"
