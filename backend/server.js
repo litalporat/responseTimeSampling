@@ -41,7 +41,12 @@ function measureResponse(websiteUrl, websiteName) {
   });
 }
 
-app.get("/newresponse", async (req, res) => {
+const lastResult = {};
+
+app.get("/newmeasure", async (req, res) => {
+  if (lastResult?.date && lastResult.date + 1900 > Date.now()) {
+    return res.json(lastResult.responseTimes);
+  }
   const measurementPromises = [];
   for (const [websiteName, websiteUrl] of Object.entries(WEBSITES)) {
     measurementPromises.push(measureResponse(websiteUrl, websiteName));
@@ -54,12 +59,18 @@ app.get("/newresponse", async (req, res) => {
       response_time: time,
     }));
     res.json(rowsToInsert);
+
+    lastResult["responseTimes"] = rowsToInsert;
+    lastResult["date"] = Date.now();
+
     knex("responses")
       .insert(rowsToInsert)
       .catch((error) => {
+        res.status(500).json({ message: error.message });
         console.error(`Error inserting ${websiteName} data: ${error}`);
       });
   } catch (error) {
+    res.status(500).json({ message: error.message });
     console.error(`Error fetching data: ${error}`);
   }
 });
@@ -79,12 +90,13 @@ app.get("/history", async (req, res) => {
       });
       const resultJson = Object.keys(WEBSITES).map((websiteName) => ({
         websiteName,
-        responses: resultsMap.get(websiteName),
+        responses: resultsMap.get(websiteName).reverse(),
         color: COLORS[websiteName],
       }));
       res.json(resultJson);
     })
     .catch((error) => {
+      res.status(500).json({ message: error.message });
       console.error(`Error fetching data: ${error}`);
     });
 });

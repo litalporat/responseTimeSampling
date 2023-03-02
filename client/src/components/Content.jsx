@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Card from "@mui/material/Card";
 import { Button } from "@mui/material";
 import Graph from "./Graph";
 import axios from "axios";
 import { useInterval } from "usehooks-ts";
 
+const INTERVAL_DELAY = 3000;
 export default function Content() {
   const [intervalFlag, setIntervalFlag] = useState(false);
   const [responseTimes, setResponseTimes] = useState();
@@ -19,22 +20,27 @@ export default function Content() {
     });
   }, []);
 
-  const activateResponses = useCallback(async () => {
+  const activateResponses = async () => {
     const response = await axios.get("http://localhost:5000/newmeasure");
     setResponseTimes((prevResponseTimes) => {
       const newData = { ...prevResponseTimes };
       for (const websiteData of response.data) {
-        newData[websiteData.website].responses = [
-          ...newData[websiteData.website].responses.slice(1),
-          websiteData.response_time,
-        ];
-        console.log(newData[websiteData.website].responses);
+        if (newData[websiteData.website].responses.length < 10) {
+          newData[websiteData.website].responses = [
+            ...newData[websiteData.website].responses,
+            websiteData.response_time,
+          ];
+        } else {
+          newData[websiteData.website].responses = [
+            ...newData[websiteData.website].responses.slice(1),
+            websiteData.response_time,
+          ];
+        }
       }
-      console.log(newData);
       return newData;
     });
-  }, []);
-  useInterval(activateResponses, intervalFlag ? 3000 : null);
+  };
+  useInterval(activateResponses, intervalFlag ? INTERVAL_DELAY : null);
 
   const btnOnClick = () => {
     setIntervalFlag((prevIntervalFlag) => {
@@ -69,8 +75,11 @@ export default function Content() {
       <Card
         variant="outlined"
         sx={{
-          width: "140vh",
-          height: "65vh",
+          width: "150vh",
+          height: "70vh",
+          display: "flex",
+          alignContent: "center",
+          justifyContent: "center",
         }}
       >
         {responseTimes && <Graph data={responseTimes} />}
