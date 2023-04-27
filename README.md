@@ -3,6 +3,8 @@
 A website that sample the response time of - Google, Facebook, Twitter, Cnet & Amazon.
 Using Node.js, Express, Postgresql & React.
 
+![WebsitePicture](https://github.com/litalporat/responseTimeSampling/blob/main/client/public/website.png?raw=true)
+
 **In order to run the website:**
 First, put your Postgresql information details in backend/db/knexfile.js
 
